@@ -1,0 +1,157 @@
+
+const pool = require("../config/db");
+const bcrypt = require("bcryptjs");
+
+exports.signup = async (req, res) => {
+  try {
+    const { first_name, middle_name, last_name, email, password } = req.body;
+    const profileImage = req.file ? req.file.buffer : null;
+
+    // Check if user exists
+    const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    if (existing.length > 0) return res.status(400).json({ error: "Email already exists" });
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
+       VALUES (?, ?, ?, ?, ?, 'student', 0, ?)`,
+      [first_name, middle_name, last_name, email, hashed, profileImage]
+    );
+
+    res.json({ message: "Signup successful" });
+  } catch (err) {
+    console.error("Signup Error:", err);
+    res.status(500).json({ error: "Signup error" });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const [rows] = await pool.query(`SELECT * FROM users WHERE email=?`, [email]);
+
+    if (rows.length === 0) return res.status(400).json({ error: "User not found" });
+
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) return res.status(400).json({ error: "Wrong password" });
+    if (user.role === "student" && user.approved === 0) return res.status(403).json({ error: "Awaiting admin approval" });
+
+    res.json({
+      message: "Login success",
+      role: user.role,
+      user_id: user.id,
+      first_name: user.first_name,
+      middle_name: user.middle_name,
+      last_name: user.last_name
+    });
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json({ error: "Login failed" });
+  }
+};
+
+exports.pendingStudents = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, first_name, middle_name, last_name, email, profile_image 
+       FROM users WHERE role='student' AND approved=0`
+    );
+    const formatted = rows.map(s => ({
+      id: s.id,
+      full_name: `${s.first_name} ${s.middle_name || ""} ${s.last_name}`.trim(),
+      email: s.email,
+      profile_image: s.profile_image ? Buffer.from(s.profile_image).toString("base64") : null
+    }));
+    res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ error: "Error loading pending students" });
+  }
+};
+
+exports.approveStudent = async (req, res) => {
+  try {
+    const { student_id } = req.body;
+    await pool.query(`UPDATE users SET approved=1 WHERE id=?`, [student_id]);
+    res.json({ message: "Student approved!" });
+  } catch (err) {
+    res.status(500).json({ error: "Approve failed" });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const { email } = req.query;
+    // Updated to select ALL details, not just image
+    const [rows] = await pool.query(`SELECT id, first_name, middle_name, last_name, email, role, profile_image FROM users WHERE email=?`, [email]);
+    
+    if (rows.length === 0) return res.status(404).json({ error: "User not found" });
+    
+    const user = rows[0];
+    const image = user.profile_image ? Buffer.from(user.profile_image).toString("base64") : null;
+    
+    res.json({ 
+        ...user,
+        profile_image: image 
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Error loading profile" });
+  }
+};
+
+exports.updateDetails = async (req, res) => {
+    try {
+        const { user_id, first_name, middle_name, last_name } = req.body;
+        
+        await pool.query(
+            "UPDATE users SET first_name=?, middle_name=?, last_name=? WHERE id=?", 
+            [first_name, middle_name, last_name, user_id]
+        );
+
+        res.json({ message: "Details updated successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update details" });
+    }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { user_id, old_password, new_password } = req.body;
+
+    const [rows] = await pool.query("SELECT password FROM users WHERE id=?", [user_id]);
+    if (rows.length === 0) return res.status(404).json({ error: "User not found" });
+
+    const currentHash = rows[0].password;
+    const match = await bcrypt.compare(old_password, currentHash);
+
+    if (!match) return res.status(400).json({ error: "Incorrect old password" });
+
+    const newHash = await bcrypt.hash(new_password, 10);
+    await pool.query("UPDATE users SET password=? WHERE id=?", [newHash, user_id]);
+
+    res.json({ message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update password" });
+  }
+};
+
+exports.updateProfileImage = async (req, res) => {
+  try {
+    const { user_id } = req.body;
+    const image = req.file ? req.file.buffer : null;
+
+    if (!image) return res.status(400).json({ error: "No image provided" });
+
+    await pool.query("UPDATE users SET profile_image=? WHERE id=?", [image, user_id]);
+
+    res.json({ message: "Profile image updated" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update image" });
+  }
+};
