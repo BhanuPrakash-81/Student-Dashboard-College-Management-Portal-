@@ -1,17 +1,16 @@
 const { Pool } = require('pg');
 require("dotenv").config();
 
-// Force IPv4 to fix Render/Supabase connection issues
-const dns = require('dns');
-if (dns.setDefaultResultOrder) {
-  dns.setDefaultResultOrder('ipv4first');
-}
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
+});
+
+// Debug: Log connection errors
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
 });
 
 module.exports = pool;
