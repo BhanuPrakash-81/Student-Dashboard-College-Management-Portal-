@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (unused)
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 
