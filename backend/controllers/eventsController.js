@@ -8,7 +8,7 @@ exports.addEvent = async (req, res) => {
 
     await pool.query(
       `INSERT INTO events (title, type, date, time, location, image, description)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [title, type, date, time, location, image, description]
     );
 
@@ -21,7 +21,7 @@ exports.addEvent = async (req, res) => {
 
 exports.getEvents = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM events ORDER BY date ASC");
+    const { rows } = await pool.query("SELECT * FROM events ORDER BY date ASC");
     const formatted = rows.map(e => ({
       ...e,
       image: e.image ? Buffer.from(e.image).toString("base64") : ""
@@ -40,12 +40,12 @@ exports.updateEvent = async (req, res) => {
 
     if (image) {
       await pool.query(
-        `UPDATE events SET title=?, type=?, date=?, time=?, location=?, description=?, image=? WHERE id=?`,
+        `UPDATE events SET title=$1, type=$2, date=$3, time=$4, location=$5, description=$6, image=$7 WHERE id=$8`,
         [title, type, date, time, location, description, image, id]
       );
     } else {
       await pool.query(
-        `UPDATE events SET title=?, type=?, date=?, time=?, location=?, description=? WHERE id=?`,
+        `UPDATE events SET title=$1, type=$2, date=$3, time=$4, location=$5, description=$6 WHERE id=$7`,
         [title, type, date, time, location, description, id]
       );
     }
@@ -60,7 +60,7 @@ exports.updateEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM events WHERE id=?", [id]);
+    await pool.query("DELETE FROM events WHERE id=$1", [id]);
     res.json({ message: "Event deleted successfully" });
   } catch (err) {
     console.error(err);

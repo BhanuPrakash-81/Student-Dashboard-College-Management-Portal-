@@ -8,14 +8,14 @@ exports.signup = async (req, res) => {
     const profileImage = req.file ? req.file.buffer : null;
 
     // Check if user exists
-    const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    const { rows: existing } = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
     if (existing.length > 0) return res.status(400).json({ error: "Email already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
 
     await pool.query(
       `INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
-       VALUES (?, ?, ?, ?, ?, 'student', 0, ?)`,
+       VALUES ($1, $2, $3, $4, $5, 'student', false, $6)`,
       [first_name, middle_name, last_name, email, hashed, profileImage]
     );
 
@@ -29,7 +29,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const [rows] = await pool.query(`SELECT * FROM users WHERE email=?`, [email]);
+    const { rows } = await pool.query(`SELECT * FROM users WHERE email=$1`, [email]);
 
     if (rows.length === 0) return res.status(400).json({ error: "User not found" });
 
@@ -37,7 +37,7 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) return res.status(400).json({ error: "Wrong password" });
-    if (user.role === "student" && user.approved === 0) return res.status(403).json({ error: "Awaiting admin approval" });
+    if (user.role === "student" && user.approved === false) return res.status(403).json({ error: "Awaiting admin approval" });
 
     res.json({
       message: "Login success",
@@ -55,9 +55,9 @@ exports.login = async (req, res) => {
 
 exports.pendingStudents = async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT id, first_name, middle_name, last_name, email, profile_image 
-       FROM users WHERE role='student' AND approved=0`
+       FROM users WHERE role='student' AND approved=false`
     );
     const formatted = rows.map(s => ({
       id: s.id,
@@ -67,6 +67,7 @@ exports.pendingStudents = async (req, res) => {
     }));
     res.json(formatted);
   } catch (err) {
+    console.error("Pending Students Error:", err);
     res.status(500).json({ error: "Error loading pending students" });
   }
 };
@@ -74,7 +75,7 @@ exports.pendingStudents = async (req, res) => {
 exports.approveStudent = async (req, res) => {
   try {
     const { student_id } = req.body;
-    await pool.query(`UPDATE users SET approved=1 WHERE id=?`, [student_id]);
+    await pool.query(`UPDATE users SET approved=true WHERE id=$1`, [student_id]);
     res.json({ message: "Student approved!" });
   } catch (err) {
     res.status(500).json({ error: "Approve failed" });
@@ -85,16 +86,16 @@ exports.getProfile = async (req, res) => {
   try {
     const { email } = req.query;
     // Updated to select ALL details, not just image
-    const [rows] = await pool.query(`SELECT id, first_name, middle_name, last_name, email, role, profile_image FROM users WHERE email=?`, [email]);
-    
+    const { rows } = await pool.query(`SELECT id, first_name, middle_name, last_name, email, role, profile_image FROM users WHERE email=$1`, [email]);
+
     if (rows.length === 0) return res.status(404).json({ error: "User not found" });
-    
+
     const user = rows[0];
     const image = user.profile_image ? Buffer.from(user.profile_image).toString("base64") : null;
-    
-    res.json({ 
-        ...user,
-        profile_image: image 
+
+    res.json({
+      ...user,
+      profile_image: image
     });
   } catch (err) {
     res.status(500).json({ error: "Error loading profile" });
@@ -102,26 +103,26 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.updateDetails = async (req, res) => {
-    try {
-        const { user_id, first_name, middle_name, last_name } = req.body;
-        
-        await pool.query(
-            "UPDATE users SET first_name=?, middle_name=?, last_name=? WHERE id=?", 
-            [first_name, middle_name, last_name, user_id]
-        );
+  try {
+    const { user_id, first_name, middle_name, last_name } = req.body;
 
-        res.json({ message: "Details updated successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to update details" });
-    }
+    await pool.query(
+      "UPDATE users SET first_name=$1, middle_name=$2, last_name=$3 WHERE id=$4",
+      [first_name, middle_name, last_name, user_id]
+    );
+
+    res.json({ message: "Details updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update details" });
+  }
 };
 
 exports.changePassword = async (req, res) => {
   try {
     const { user_id, old_password, new_password } = req.body;
 
-    const [rows] = await pool.query("SELECT password FROM users WHERE id=?", [user_id]);
+    const { rows } = await pool.query("SELECT password FROM users WHERE id=$1", [user_id]);
     if (rows.length === 0) return res.status(404).json({ error: "User not found" });
 
     const currentHash = rows[0].password;
@@ -130,7 +131,7 @@ exports.changePassword = async (req, res) => {
     if (!match) return res.status(400).json({ error: "Incorrect old password" });
 
     const newHash = await bcrypt.hash(new_password, 10);
-    await pool.query("UPDATE users SET password=? WHERE id=?", [newHash, user_id]);
+    await pool.query("UPDATE users SET password=$1 WHERE id=$2", [newHash, user_id]);
 
     res.json({ message: "Password updated successfully" });
 
@@ -147,7 +148,7 @@ exports.updateProfileImage = async (req, res) => {
 
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    await pool.query("UPDATE users SET profile_image=? WHERE id=?", [image, user_id]);
+    await pool.query("UPDATE users SET profile_image=$1 WHERE id=$2", [image, user_id]);
 
     res.json({ message: "Profile image updated" });
   } catch (err) {

@@ -8,7 +8,7 @@ exports.addAnnouncement = async (req, res) => {
     const activeVal = is_active ? 1 : 0;
 
     await pool.query(
-      "INSERT INTO announcements (title, message, is_active) VALUES (?, ?, ?)",
+      "INSERT INTO announcements (title, message, is_active) VALUES ($1, $2, $3)",
       [title, message, activeVal]
     );
     res.json({ message: "Announcement posted successfully" });
@@ -20,7 +20,7 @@ exports.addAnnouncement = async (req, res) => {
 
 exports.getAnnouncements = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM announcements ORDER BY created_at DESC");
+    const { rows } = await pool.query("SELECT * FROM announcements ORDER BY created_at DESC");
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -35,7 +35,7 @@ exports.updateAnnouncement = async (req, res) => {
     const activeVal = is_active ? 1 : 0;
 
     await pool.query(
-      "UPDATE announcements SET title=?, message=?, is_active=? WHERE id=?",
+      "UPDATE announcements SET title=$1, message=$2, is_active=$3 WHERE id=$4",
       [title, message, activeVal, id]
     );
     res.json({ message: "Announcement updated successfully" });
@@ -48,7 +48,7 @@ exports.updateAnnouncement = async (req, res) => {
 exports.deleteAnnouncement = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM announcements WHERE id=?", [id]);
+    await pool.query("DELETE FROM announcements WHERE id=$1", [id]);
     res.json({ message: "Announcement deleted successfully" });
   } catch (err) {
     console.error(err);

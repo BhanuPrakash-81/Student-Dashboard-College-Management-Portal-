@@ -20,6 +20,10 @@ export const api = {
     },
     getPendingStudents: async () => {
       const res = await fetch(`${API_BASE}/auth/pending-students`);
+      if (!res.ok) {
+        console.error("Failed to fetch pending students:", res.statusText);
+        return [];
+      }
       return res.json();
     },
     approveStudent: async (id: number) => {
@@ -35,12 +39,12 @@ export const api = {
       return res.json();
     },
     updateDetails: async (data: any) => {
-        const res = await fetch(`${API_BASE}/auth/update-details`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        return res.json();
+      const res = await fetch(`${API_BASE}/auth/update-details`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
     },
     changePassword: async (data: any) => {
       const res = await fetch(`${API_BASE}/auth/change-password`, {
