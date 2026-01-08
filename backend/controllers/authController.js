@@ -14,11 +14,13 @@ exports.signup = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await pool.query(
-      `INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
-       VALUES ($1, $2, $3, $4, $5, 'student', false, $6)`,
-      [first_name, middle_name, last_name, email, hashed, profileImage]
-    );
+    const query = `
+      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
+      VALUES ($1, $2, $3, $4, $5, 'student', false, $6)
+    `;
+    const safeImage = profileImage || null;
+
+    await pool.query(query, [first_name, middle_name, last_name, email, hashed, safeImage]);
 
     res.json({ message: "Signup successful" });
   } catch (err) {
