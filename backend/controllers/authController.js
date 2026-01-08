@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 exports.signup = async (req, res) => {
   try {
     const { first_name, middle_name, last_name, email, password } = req.body;
+    console.log("Signup Request:", { email, hasFile: !!req.file });
     const profileImage = req.file ? req.file.buffer : null;
 
     // Check if user exists
