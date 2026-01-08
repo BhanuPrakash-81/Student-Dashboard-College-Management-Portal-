@@ -18,13 +18,17 @@ exports.signup = async (req, res) => {
     // const profileImage = req.file ? req.file.buffer : null;
     // const safeImage = profileImage || null;
 
-    const query = `
-      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved)
-      VALUES ($1, $2, $3, $4, $5, 'student', false)
-    `;
-    // const safeImage = profileImage || null;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-    await pool.query(query, [first_name, middle_name, last_name, email, hashed]);
+    const query = `
+      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
+      VALUES ($1, $2, $3, $4, $5, 'student', false, $6)
+    `;
+    const safeImage = req.file ? req.file.buffer : null;
+
+    await pool.query(query, [first_name, middle_name, last_name, email, hashed, safeImage]);
 
     res.json({ message: "Signup successful" });
   } catch (err) {
