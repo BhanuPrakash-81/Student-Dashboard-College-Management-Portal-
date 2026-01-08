@@ -14,13 +14,17 @@ exports.signup = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const query = `
-      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
-      VALUES ($1, $2, $3, $4, $5, 'student', false, $6)
-    `;
-    const safeImage = profileImage || null;
+    // Temporarily disable image for debugging
+    // const profileImage = req.file ? req.file.buffer : null;
+    // const safeImage = profileImage || null;
 
-    await pool.query(query, [first_name, middle_name, last_name, email, hashed, safeImage]);
+    const query = `
+      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved)
+      VALUES ($1, $2, $3, $4, $5, 'student', false)
+    `;
+    // const safeImage = profileImage || null;
+
+    await pool.query(query, [first_name, middle_name, last_name, email, hashed]);
 
     res.json({ message: "Signup successful" });
   } catch (err) {
