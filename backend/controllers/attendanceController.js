@@ -34,7 +34,7 @@ exports.getStudentAttendance = async (req, res) => {
        FROM attendance a
        JOIN subjects s ON a.subject_id = s.id
        WHERE a.student_id = $1 AND DATE(a.date) >= $2
-       GROUP BY DATE(a.date), a.subject_id, s.subject_code, s.subject_name
+       GROUP BY DATE(a.date), a.subject_id, s.id, s.subject_code, s.subject_name
        ORDER BY DATE(a.date) DESC`,
       [student_id, last30Days]
     );
@@ -56,7 +56,7 @@ exports.getStudentAttendance = async (req, res) => {
        FROM attendance a
        JOIN subjects s ON a.subject_id = s.id
        WHERE a.student_id = $1
-       GROUP BY a.subject_id, s.subject_code, s.subject_name, s.faculty_name
+       GROUP BY a.subject_id, s.id, s.subject_code, s.subject_name, s.faculty_name
        ORDER BY s.subject_name`,
       [student_id]
     );
