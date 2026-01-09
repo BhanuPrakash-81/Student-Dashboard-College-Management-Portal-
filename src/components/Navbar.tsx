@@ -44,7 +44,9 @@ const Navbar: React.FC = () => {
               <Logo size="sm" />
               <div className="flex flex-col">
                 <span className="font-bold text-xl text-slate-800 tracking-tight leading-none">KL University</span>
-                <span className="text-[10px] font-bold text-red-600 tracking-widest uppercase">Student Portal</span>
+                <span className="text-[10px] font-bold text-red-600 tracking-widest uppercase">
+                  {userRole === 'faculty' ? 'Faculty Portal' : userRole === 'admin' ? 'Admin Portal' : 'Student Portal'}
+                </span>
               </div>
             </Link>
           </div>
@@ -69,11 +71,26 @@ const Navbar: React.FC = () => {
                 </Link>
               </>
             )}
-
+            {userRole === 'faculty' && (
+              <>
+                <Link to="/faculty/dashboard" className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isActive('/faculty/dashboard')}`}>
+                  <i className="fas fa-chalkboard-teacher"></i> Dashboard
+                </Link>
+                <Link to="/events" className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isActive('/events')}`}>
+                  <i className="fas fa-calendar"></i> Events
+                </Link>
+                <Link to="/announcements" className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isActive('/announcements')}`}>
+                  <i className="fas fa-bullhorn"></i> Announcements
+                </Link>
+              </>
+            )}
             {userRole === 'admin' && (
               <>
                 <Link to="/admin" className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isActive('/admin')}`}>
                   <i className="fas fa-shield-alt"></i> Admin Panel
+                </Link>
+                <Link to="/admin/schedule" className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isActive('/admin/schedule')}`}>
+                  <i className="fas fa-calendar-alt"></i> Schedule Maker
                 </Link>
                 <Link to="/announcements" className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${isActive('/announcements')}`}>
                   <i className="fas fa-bullhorn"></i> View Announcements

@@ -1,8 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { AttendanceSummary, GradesResponse, EventItem, Announcement } from '../types';
 import { Link } from 'react-router-dom';
+import Timetable from '../components/Timetable';
 
 const Dashboard: React.FC = () => {
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
@@ -10,54 +10,70 @@ const Dashboard: React.FC = () => {
   const [eventsCount, setEventsCount] = useState<number>(0);
   const [recentEvents, setRecentEvents] = useState<EventItem[]>([]);
   const [notifications, setNotifications] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const user = {
-    firstName: localStorage.getItem('first_name'),
-    lastName: localStorage.getItem('last_name'),
-    id: localStorage.getItem('id')
-  };
+  const firstName = localStorage.getItem('first_name');
+  const studentId = localStorage.getItem('id');
 
   useEffect(() => {
-    if (user.id) {
-      // Load Attendance
-      api.attendance.getStudent(user.id).then(data => {
-        setAttendance(data.summary);
-      }).catch(err => console.error("Att Err", err));
-
-      // Load Grades
-      api.grades.getStudent(user.id).then((data: GradesResponse) => {
-        setCgpa(data.cgpa);
-      }).catch(err => console.error("Grade Err", err));
-
-      // Load Events
-      api.events.getAll().then((data: EventItem[]) => {
-        setEventsCount(data.length);
-        setRecentEvents(data.slice(0, 3));
-      }).catch(err => console.error("Event Err", err));
-
-      // Load Announcements for Ticker
-      api.announcements.getAll().then((data: Announcement[]) => {
-        // Only show active announcements in ticker
-        setNotifications(data.filter(a => a.is_active === 1));
-      }).catch(err => console.error("Notif Err", err));
+    if (studentId) {
+      Promise.all([
+        api.attendance.getStudent(studentId),
+        api.grades.getStudent(studentId),
+        api.events.getAll(),
+        api.announcements.getAll()
+      ]).then(([att, grd, evts, anns]) => {
+        setAttendance(att.summary);
+        setCgpa(grd.cgpa);
+        setEventsCount(evts.length);
+        setRecentEvents(evts.slice(0, 3));
+        setNotifications(anns.filter(a => a.is_active === 1));
+        setLoading(false);
+      }).catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
     }
-  }, [user.id]);
+  }, [studentId]);
+
+  if (loading) return <div className="p-20 text-center font-bold text-slate-400">Loading your academic space...</div>;
+
+  const attPerc = attendance?.overallPercentage ?? 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Header / Welcome */}
+      <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-6">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
+        <div className="relative z-10 text-center md:text-left">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">Welcome Back, {firstName}!</h1>
+          <p className="text-red-100 font-medium text-lg italic opacity-80">"Education is the passport to the future."</p>
+        </div>
+        <div className="relative z-10 flex gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center min-w-[100px]">
+            <div className="text-2xl font-black">{cgpa ? Number(cgpa).toFixed(2) : '0.00'}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Current CGPA</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center min-w-[100px]">
+            <div className="text-2xl font-black">{attPerc}%</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Attendance</div>
+          </div>
+        </div>
+      </div>
 
       {/* Notification Ticker */}
       {notifications.length > 0 && (
-        <div className="bg-white border-l-4 border-orange-500 shadow-sm rounded-r-lg mb-8 overflow-hidden relative h-12 flex items-center">
-          <div className="bg-orange-500 text-white px-4 h-full flex items-center font-bold z-10 shadow-lg absolute left-0 top-0">
-            <i className="fas fa-bullhorn mr-2"></i> Updates
+        <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-4 overflow-hidden relative flex items-center gap-10">
+          <div className="bg-red-600 text-white px-5 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg z-10 shrink-0">
+            Bulletin
           </div>
-          <div className="w-full overflow-hidden flex items-center h-full ml-32">
-            <div className="animate-ticker whitespace-nowrap flex gap-12 text-slate-700 font-medium">
+          <div className="w-full overflow-hidden">
+            <div className="animate-ticker whitespace-nowrap flex gap-12 text-slate-600 font-bold text-sm">
               {notifications.map((note) => (
                 <span key={note.id} className="inline-flex items-center">
-                  <i className="fas fa-circle text-[8px] text-orange-400 mr-2"></i>
-                  {note.title}: {note.message.substring(0, 80)}{note.message.length > 80 ? '...' : ''}
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mr-2"></span>
+                  {note.title}: {note.message}
                 </span>
               ))}
             </div>
@@ -65,71 +81,82 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">Welcome back, {user.firstName}!</h1>
-        <p className="text-slate-500 mt-1">Here's what's happening with your academics today.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Stat Cards */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl mb-3">
-            <i className="fas fa-clipboard-check"></i>
-          </div>
-          <div className="text-3xl font-bold text-slate-800">{attendance?.overallPercentage ?? 0}%</div>
-          <div className="text-sm text-slate-500 font-medium">Overall Attendance</div>
+      {/* Grid for Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Left Side: Schedule - Spans 2 */}
+        <div className="lg:col-span-2 space-y-10">
+          {studentId && <Timetable studentId={studentId} />}
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-3">
-            <i className="fas fa-graduation-cap"></i>
+        {/* Right Side: Quick Stats & Events */}
+        <div className="space-y-10">
+          {/* Performance Card */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <i className="fas fa-chart-line text-indigo-500"></i> Semester Attendance
+            </h3>
+            <div className="relative h-40 flex items-center justify-center">
+              {/* Simple circular progress representation */}
+              <svg className="w-32 h-32 transform -rotate-90">
+                <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100" />
+                <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent"
+                  className={attPerc >= 75 ? 'text-emerald-500' : 'text-red-500'}
+                  strokeDasharray={364.42}
+                  strokeDashoffset={364.42 - (364.42 * attPerc) / 100}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-black text-slate-800">{attPerc}%</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Average</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="bg-slate-50 p-3 rounded-2xl text-center">
+                <div className="text-sm font-black text-slate-700">{attendance?.totalPresent || 0}</div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase">Present</div>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-2xl text-center">
+                <div className="text-sm font-black text-slate-700">{(attendance?.totalClasses || 0) - (attendance?.totalPresent || 0)}</div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase">Absent</div>
+              </div>
+            </div>
+            <Link to="/attendance" className="block w-full text-center mt-6 text-xs font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-widest">
+              View Subject Breakdown
+            </Link>
           </div>
-          <div className="text-3xl font-bold text-slate-800">{cgpa ? Number(cgpa).toFixed(2) : 'N/A'}</div>
-          <div className="text-sm text-slate-500 font-medium">Current CGPA</div>
-        </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl mb-3">
-            <i className="fas fa-calendar-alt"></i>
-          </div>
-          <div className="text-3xl font-bold text-slate-800">{eventsCount}</div>
-          <div className="text-sm text-slate-500 font-medium">Upcoming Events</div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-slate-800">Recent Events</h2>
-            <Link to="/events" className="text-indigo-600 text-sm font-semibold hover:underline">View All</Link>
-          </div>
-          <div className="space-y-4">
-            {recentEvents.length === 0 ? (
-              <p className="text-center text-slate-400 py-4">No upcoming events.</p>
-            ) : (
-              recentEvents.map(event => (
-                <div key={event.id} className="flex gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                  <div className="w-16 h-16 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0">
+          {/* Events List */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <i className="fas fa-sparkles text-yellow-500"></i> Events
+              </h3>
+              <Link to="/events" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Explore All</Link>
+            </div>
+            <div className="space-y-4">
+              {recentEvents.map(event => (
+                <div key={event.id} className="flex gap-4 p-2 group cursor-pointer">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 shadow-sm transition-transform group-hover:scale-105">
                     {event.image ? (
-                      <img src={`data:image/jpeg;base64,${event.image}`} alt={event.title} className="w-full h-full object-cover" />
+                      <img src={`data:image/jpeg;base64,${event.image}`} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-400"><i className="fas fa-image"></i></div>
+                      <div className="w-full h-full flex items-center justify-center bg-red-50 text-red-200"><i className="fas fa-image"></i></div>
                     )}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-800 line-clamp-1">{event.title}</h3>
-                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide
-                           ${event.type === 'Workshop' ? 'bg-blue-100 text-blue-700' :
-                          event.type === 'Cultural' ? 'bg-pink-100 text-pink-700' :
-                            event.type === 'Sports' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}
-                         `}>{event.type}</span>
-                      <span>{new Date(event.date).toLocaleDateString()}</span>
+                  <div className="flex flex-col justify-center overflow-hidden">
+                    <h4 className="font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-red-600 transition-colors">{event.title}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${event.type === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
+                        {event.type}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {new Date(event.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
         </div>
       </div>

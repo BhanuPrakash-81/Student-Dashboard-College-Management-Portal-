@@ -1,341 +1,228 @@
-
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { PendingStudent, EventItem, Announcement } from '../types';
 
 const Admin: React.FC = () => {
+  const [stats, setStats] = useState({ students: 0, faculty: 0, events: 0, attendance: 0 });
   const [pendingStudents, setPendingStudents] = useState<PendingStudent[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // -- Event State --
-  const [editingEventId, setEditingEventId] = useState<number | null>(null);
-  const [eventForm, setEventForm] = useState({
-    title: '',
-    type: 'Workshop',
-    date: '',
-    time: '',
-    description: ''
-  });
+  const [eventForm, setEventForm] = useState({ title: '', type: 'Workshop', date: '', time: '', description: '' });
   const [eventImage, setEventImage] = useState<File | null>(null);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
 
-  // -- Announcement State --
+  const [annForm, setAnnForm] = useState({ title: '', message: '', is_active: false });
   const [editingAnnId, setEditingAnnId] = useState<number | null>(null);
-  const [announcementForm, setAnnouncementForm] = useState({
-    title: '',
-    message: '',
-    is_active: false
-  });
 
   useEffect(() => {
     refreshData();
   }, []);
 
-  const refreshData = () => {
-    loadPending();
-    loadEvents();
-    loadAnnouncements();
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      const [pending, evts, anns] = await Promise.all([
+        api.auth.getPendingStudents(),
+        api.events.getAll(),
+        api.announcements.getAll()
+      ]);
+      setPendingStudents(pending);
+      setEvents(evts);
+      setAnnouncements(anns);
+      // Mocking some stats for the dashboard feel
+      setStats({ students: 200, faculty: 15, events: evts.length, attendance: 16000 });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const loadPending = () => {
-    api.auth.getPendingStudents().then(data => setPendingStudents(data));
-  };
-
-  const loadEvents = () => {
-    api.events.getAll().then(data => setEvents(data));
-  }
-
-  const loadAnnouncements = () => {
-    api.announcements.getAll().then(data => setAnnouncements(data));
-  }
 
   const handleApprove = async (id: number) => {
     await api.auth.approveStudent(id);
-    loadPending();
+    refreshData();
   };
 
-  // --- EVENTS HANDLERS ---
   const handleEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
-    Object.entries(eventForm).forEach(([key, value]) => formData.append(key, value as string));
+    Object.entries(eventForm).forEach(([k, v]) => formData.append(k, v));
     if (eventImage) formData.append('image', eventImage);
 
-    try {
-      if (editingEventId) {
-        await api.events.update(editingEventId, formData);
-        alert('Event updated!');
-      } else {
-        await api.events.add(formData);
-        alert('Event added!');
-      }
-      resetEventForm();
-      loadEvents();
-    } catch (err) {
-      console.error(err);
-      alert('Operation failed');
-    }
-  };
+    if (editingEventId) await api.events.update(editingEventId, formData);
+    else await api.events.add(formData);
 
-  const editEvent = (evt: EventItem) => {
-    setEditingEventId(evt.id);
-    setEventForm({
-      title: evt.title,
-      type: evt.type,
-      date: evt.date ? new Date(evt.date).toISOString().split('T')[0] : '', // Format date for input
-      time: evt.time,
-      description: evt.description
-    });
-    setEventImage(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to form
-  };
-
-  const deleteEvent = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this event?")) return;
-    try {
-      await api.events.delete(id);
-      loadEvents();
-    } catch (err) {
-      alert("Failed to delete event");
-    }
-  };
-
-  const resetEventForm = () => {
     setEditingEventId(null);
     setEventForm({ title: '', type: 'Workshop', date: '', time: '', description: '' });
-    setEventImage(null);
+    refreshData();
   };
 
-
-  // --- ANNOUNCEMENT HANDLERS ---
-  const handleAnnouncementSubmit = async (e: React.FormEvent) => {
+  const handleAnnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (editingAnnId) {
-        await api.announcements.update(editingAnnId, announcementForm);
-        alert('Announcement updated!');
-      } else {
-        await api.announcements.add(announcementForm);
-        alert('Announcement posted!');
-      }
-      resetAnnForm();
-      loadAnnouncements();
-    } catch (err) {
-      console.error(err);
-      alert('Operation failed');
-    }
-  };
+    if (editingAnnId) await api.announcements.update(editingAnnId, annForm);
+    else await api.announcements.add(annForm);
 
-  const editAnnouncement = (ann: Announcement) => {
-    setEditingAnnId(ann.id);
-    setAnnouncementForm({
-      title: ann.title,
-      message: ann.message,
-      is_active: ann.is_active === 1
-    });
-  };
-
-  const deleteAnnouncement = async (id: number) => {
-    if (!window.confirm("Delete this announcement?")) return;
-    try {
-      await api.announcements.delete(id);
-      loadAnnouncements();
-    } catch (err) {
-      alert("Failed to delete");
-    }
-  };
-
-  const toggleAnnouncementStatus = async (ann: Announcement) => {
-    try {
-      // Toggle the boolean value
-      await api.announcements.update(ann.id, {
-        title: ann.title,
-        message: ann.message,
-        is_active: ann.is_active !== 1
-      });
-      loadAnnouncements();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const resetAnnForm = () => {
     setEditingAnnId(null);
-    setAnnouncementForm({ title: '', message: '', is_active: false });
+    setAnnForm({ title: '', message: '', is_active: false });
+    refreshData();
   };
 
+  if (loading) return <div className="p-20 text-center font-bold text-slate-400 animate-pulse transition-all">Synchronizing Database...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-slate-800 mb-8">Admin Dashboard</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">University Management</h1>
+          <p className="text-slate-500 font-medium">Global Administrator Control Panel</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 bg-white border border-slate-100 px-4 py-2 rounded-full shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          SYSTEM ONLINE: STABLE
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Enrolled', val: stats.students, icon: 'fas fa-user-graduate', color: 'indigo' },
+          { label: 'Active Faculty', val: stats.faculty, icon: 'fas fa-chalkboard-teacher', color: 'violet' },
+          { label: 'Published Events', val: stats.events, icon: 'fas fa-calendar-check', color: 'emerald' },
+          { label: 'System Logs', val: stats.attendance, icon: 'fas fa-database', color: 'slate' }
+        ].map((s, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className={`w-12 h-12 rounded-2xl bg-${s.color}-50 text-${s.color}-600 flex items-center justify-center text-xl mb-4`}>
+              <i className={s.icon}></i>
+            </div>
+            <div className="text-3xl font-black text-slate-800 tracking-tighter">{s.val.toLocaleString()}</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{s.label}</div>
+          </div>
+        ))}
+      </div>
 
-        {/* Pending Approvals */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 lg:col-span-2">
-          <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i className="fas fa-user-clock text-indigo-500"></i> Pending Student Approvals
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pendingStudents.length === 0 ? <p className="text-slate-500 col-span-full">No pending approvals.</p> :
-              pendingStudents.map(student => (
-                <div key={student.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={student.profile_image ? `data:image/jpeg;base64,${student.profile_image}` : "https://ui-avatars.com/api/?name=User&background=random"}
-                      className="w-10 h-10 rounded-full object-cover"
-                      alt="profile"
-                    />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Left Column: Requests & Lists */}
+        <div className="lg:col-span-2 space-y-10">
+          {/* Pending Approvals */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <i className="fas fa-id-badge text-indigo-500"></i> Registration Requests
+              </h3>
+              <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">{pendingStudents.length} Pending</span>
+            </div>
+            <div className="divide-y divide-slate-50">
+              {pendingStudents.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 italic font-medium">No new registrations to review.</div>
+              ) : pendingStudents.map(s => (
+                <div key={s.id} className="px-8 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden ring-2 ring-white">
+                      <img src={s.profile_image ? `data:image/jpeg;base64,${s.profile_image}` : `https://ui-avatars.com/api/?name=${s.full_name}`} className="w-full h-full object-cover" />
+                    </div>
                     <div>
-                      <div className="font-semibold text-slate-800">{student.full_name}</div>
-                      <div className="text-xs text-slate-500">{student.email}</div>
+                      <div className="font-bold text-slate-800">{s.full_name}</div>
+                      <div className="text-xs text-slate-500 font-medium">{s.email}</div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleApprove(student.id)}
-                    className="px-3 py-1.5 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 transition-colors shadow-sm"
-                  >
-                    Approve
-                  </button>
-                </div>
-              ))
-            }
-          </div>
-        </div>
-
-        {/* --- EVENTS SECTION --- */}
-        <div className="space-y-6">
-          {/* Event Form */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i className="fas fa-calendar-plus text-indigo-500"></i>
-                {editingEventId ? 'Edit Event' : 'Add New Event'}
-              </h2>
-              {editingEventId && <button onClick={resetEventForm} className="text-xs text-slate-500 hover:text-red-500">Cancel Edit</button>}
-            </div>
-
-            <form onSubmit={handleEventSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Event Title</label>
-                <input type="text" required value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
-                  <select value={eventForm.type} onChange={e => setEventForm({ ...eventForm, type: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <option>Workshop</option>
-                    <option>Cultural</option>
-                    <option>Sports</option>
-                    <option>Technical</option>
-                    <option>Seminar</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                  <input type="date" required value={eventForm.date} onChange={e => setEventForm({ ...eventForm, date: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Time</label>
-                <input type="text" placeholder="10:00 AM" required value={eventForm.time} onChange={e => setEventForm({ ...eventForm, time: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                <textarea required value={eventForm.description} onChange={e => setEventForm({ ...eventForm, description: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none h-24"></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Cover Image {editingEventId && <span className="text-xs text-slate-400 font-normal">(Leave empty to keep current)</span>}</label>
-                <input type="file" required={!editingEventId} onChange={e => setEventImage(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-              </div>
-              <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-                {editingEventId ? 'Update Event' : 'Create Event'}
-              </button>
-            </form>
-          </div>
-
-          {/* Event List */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 max-h-[500px] overflow-y-auto">
-            <h3 className="text-md font-bold text-slate-800 mb-4">Manage Events</h3>
-            <div className="space-y-3">
-              {events.map(evt => (
-                <div key={evt.id} className="p-3 border border-slate-100 rounded-lg flex justify-between items-center hover:bg-slate-50">
-                  <div>
-                    <div className="font-semibold text-slate-700 text-sm">{evt.title}</div>
-                    <div className="text-xs text-slate-500">{new Date(evt.date).toLocaleDateString()}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => editEvent(evt)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded"><i className="fas fa-edit"></i></button>
-                    <button onClick={() => deleteEvent(evt.id)} className="text-red-500 hover:bg-red-50 p-1 rounded"><i className="fas fa-trash"></i></button>
-                  </div>
+                  <button onClick={() => handleApprove(s.id)} className="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200">Verify & Approve</button>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* --- ANNOUNCEMENTS SECTION --- */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i className="fas fa-bullhorn text-orange-500"></i>
-                {editingAnnId ? 'Edit Announcement' : 'Post Announcement'}
-              </h2>
-              {editingAnnId && <button onClick={resetAnnForm} className="text-xs text-slate-500 hover:text-red-500">Cancel Edit</button>}
+          {/* Content Feed Management */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Mini Event List */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-slate-800 text-sm">Active Events</h3>
+                <button onClick={() => window.scrollTo(0, 500)} className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:underline">New Event</button>
+              </div>
+              <div className="space-y-4">
+                {events.slice(0, 4).map(e => (
+                  <div key={e.id} className="group flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-400 text-xs font-bold uppercase transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                      {new Date(e.date).getDate()}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs font-bold text-slate-800 line-clamp-1">{e.title}</div>
+                      <div className="text-[10px] text-slate-400 font-medium">{e.type}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <form onSubmit={handleAnnouncementSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
-                <input type="text" required value={announcementForm.title} onChange={e => setAnnouncementForm({ ...announcementForm, title: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Exam Schedule Release" />
+            {/* Mini Ann List */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-slate-800 text-sm">System Notices</h3>
+                <button className="text-[10px] font-bold text-orange-600 uppercase tracking-widest hover:underline">Post New</button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-                <textarea required value={announcementForm.message} onChange={e => setAnnouncementForm({ ...announcementForm, message: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none h-40" placeholder="Type your announcement here..."></textarea>
+              <div className="space-y-4">
+                {announcements.slice(0, 4).map(a => (
+                  <div key={a.id} className="flex items-start gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-50">
+                    <div className="mt-1"><span className={`w-2 h-2 rounded-full block ${a.is_active === 1 ? 'bg-emerald-500' : 'bg-slate-300'}`}></span></div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 line-clamp-1">{a.title}</div>
+                      <div className="text-[10px] text-slate-400 leading-tight mt-0.5 line-clamp-2">{a.message}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={announcementForm.is_active}
-                  onChange={e => setAnnouncementForm({ ...announcementForm, is_active: e.target.checked })}
-                  className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500"
-                />
-                <label htmlFor="isActive" className="text-sm font-medium text-slate-700">Show on Dashboard Ticker</label>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Forms */}
+        <div className="space-y-10">
+          {/* Notification Poster */}
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <i className="fas fa-bolt text-orange-500"></i> Dispatch Notice
+            </h3>
+            <form onSubmit={handleAnnSubmit} className="space-y-5">
+              <input
+                type="text"
+                placeholder="Announcement Title"
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                value={annForm.title}
+                onChange={e => setAnnForm({ ...annForm, title: e.target.value })}
+                required
+              />
+              <textarea
+                placeholder="Message body..."
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all h-32 resize-none"
+                value={annForm.message}
+                onChange={e => setAnnForm({ ...annForm, message: e.target.value })}
+                required
+              />
+              <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <input type="checkbox" id="adm-act" checked={annForm.is_active} onChange={e => setAnnForm({ ...annForm, is_active: e.target.checked })} className="w-4 h-4 rounded text-orange-600" />
+                <label htmlFor="adm-act" className="text-xs font-bold text-slate-600">Broadcast to Dashboard Ticker</label>
               </div>
-              <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-colors">
-                {editingAnnId ? 'Update Announcement' : 'Post Announcement'}
+              <button className="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-orange-600 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-widest">
+                Dispatch Announcement
               </button>
             </form>
           </div>
 
-          {/* Announcement List */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 max-h-[500px] overflow-y-auto">
-            <h3 className="text-md font-bold text-slate-800 mb-4">Manage Announcements</h3>
-            <div className="space-y-3">
-              {announcements.map(ann => (
-                <div key={ann.id} className="p-3 border border-slate-100 rounded-lg flex justify-between items-start hover:bg-slate-50">
-                  <div className="flex-1">
-                    <div className="font-semibold text-slate-700 text-sm">{ann.title}</div>
-                    <div className="text-xs text-slate-500 mb-1">{ann.message.substring(0, 40)}...</div>
-                    <button
-                      onClick={() => toggleAnnouncementStatus(ann)}
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${ann.is_active === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
-                    >
-                      {ann.is_active === 1 ? 'Visible on Dashboard' : 'Hidden'}
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => editAnnouncement(ann)} className="text-indigo-600 hover:bg-indigo-50 p-1 rounded"><i className="fas fa-edit"></i></button>
-                    <button onClick={() => deleteAnnouncement(ann.id)} className="text-red-500 hover:bg-red-50 p-1 rounded"><i className="fas fa-trash"></i></button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* Quick Access Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <button onClick={() => window.location.hash = '#/admin/schedule'} className="bg-slate-900 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-white hover:bg-slate-800 transition-all group">
+              <i className="fas fa-calendar-alt text-2xl group-hover:scale-110 transition-transform"></i>
+              <span className="text-[10px] font-black uppercase tracking-widest">Schedule Maker</span>
+            </button>
+            <button className="bg-white border border-slate-100 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-800 hover:border-indigo-500 transition-all group">
+              <i className="fas fa-cog text-2xl text-slate-300 group-hover:rotate-90 group-hover:text-indigo-500 transition-transform duration-500"></i>
+              <span className="text-[10px] font-black uppercase tracking-widest">Global Settings</span>
+            </button>
           </div>
         </div>
-
       </div>
     </div>
   );

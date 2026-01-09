@@ -23,6 +23,7 @@ const Login: React.FC = () => {
         localStorage.setItem('last_name', data.last_name);
 
         if (data.role === 'admin') navigate('/admin');
+        else if (data.role === 'faculty') navigate('/faculty/dashboard');
         else navigate('/dashboard');
       }
     } catch (err) {

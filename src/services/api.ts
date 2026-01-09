@@ -127,5 +127,45 @@ export const api = {
       });
       return res.json();
     }
+  },
+  faculty: {
+    getDashboard: async (facultyId: string | number) => {
+      const res = await fetch(`${API_BASE}/faculty/dashboard/${facultyId}`);
+      return res.json();
+    },
+    getClassList: async (dept: string, sem: number, sec: string) => {
+      const res = await fetch(`${API_BASE}/faculty/class-list?department=${dept}&semester=${sem}&section=${sec}`);
+      return res.json();
+    },
+    markAttendance: async (data: any) => {
+      const res = await fetch(`${API_BASE}/faculty/mark-attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    }
+  },
+  schedule: {
+    create: async (data: any) => {
+      const res = await fetch(`${API_BASE}/schedule/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    getAll: async () => {
+      const res = await fetch(`${API_BASE}/schedule/all`);
+      return res.json();
+    },
+    getFacultySchedule: async (id: number | string) => {
+      const res = await fetch(`${API_BASE}/schedule/faculty/${id}`);
+      return res.json();
+    },
+    getStudent: async (studentId: string | number) => {
+      const res = await fetch(`${API_BASE}/schedule/student?student_id=${studentId}`);
+      return res.json();
+    }
   }
 };
