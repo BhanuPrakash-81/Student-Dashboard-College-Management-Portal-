@@ -62,6 +62,12 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Greeting Header */}
+      <div className="mb-2">
+        <h1 className="text-2xl md:text-3xl font-black text-slate-800">Hello, {firstName}! 🎓</h1>
+        <p className="text-slate-500 font-medium text-xs md:text-sm">Here's your academic briefing for today.</p>
+      </div>
+
       {/* Premium Stat Highlights - Grid is mobile-first */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
