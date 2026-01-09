@@ -7,7 +7,6 @@ import Timetable from '../components/Timetable';
 const Dashboard: React.FC = () => {
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
   const [cgpa, setCgpa] = useState<string | null>(null);
-  const [eventsCount, setEventsCount] = useState<number>(0);
   const [recentEvents, setRecentEvents] = useState<EventItem[]>([]);
   const [notifications, setNotifications] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,9 +24,8 @@ const Dashboard: React.FC = () => {
       ]).then(([att, grd, evts, anns]) => {
         setAttendance(att.summary);
         setCgpa(grd.cgpa);
-        setEventsCount(evts.length);
         setRecentEvents(evts.slice(0, 3));
-        setNotifications(anns.filter(a => a.is_active === 1));
+        setNotifications(anns.filter((a: Announcement) => a.is_active === 1));
         setLoading(false);
       }).catch(err => {
         console.error(err);

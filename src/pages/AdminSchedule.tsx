@@ -17,8 +17,7 @@ const AdminSchedule: React.FC = () => {
         section: 'A'
     });
 
-    const [subjects, setSubjects] = useState<any[]>([]);
-    const [faculty, setFaculty] = useState<any[]>([]);
+
 
     useEffect(() => {
         loadData();

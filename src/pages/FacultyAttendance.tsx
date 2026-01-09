@@ -137,7 +137,7 @@ const FacultyAttendance: React.FC = () => {
                             <tbody className="divide-y divide-slate-50">
                                 {marking ? (
                                     <tr><td colSpan={3} className="p-20 text-center text-slate-400">Fetching students...</td></tr>
-                                ) : students.map((s, idx) => (
+                                ) : students.map((s) => (
                                     <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-8 py-5 text-sm font-bold text-slate-400 tracking-tighter">{s.id}</td>
                                         <td className="px-8 py-5">
@@ -155,9 +155,9 @@ const FacultyAttendance: React.FC = () => {
                                                         key={status}
                                                         onClick={() => handleStatusChange(s.id, status)}
                                                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${attendanceData[s.id] === status
-                                                                ? status === 'Present' ? 'bg-emerald-500 text-white border-emerald-500' :
-                                                                    status === 'Absent' ? 'bg-red-500 text-white border-red-500' : 'bg-orange-500 text-white border-orange-500'
-                                                                : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                                                            ? status === 'Present' ? 'bg-emerald-500 text-white border-emerald-500' :
+                                                                status === 'Absent' ? 'bg-red-500 text-white border-red-500' : 'bg-orange-500 text-white border-orange-500'
+                                                            : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                                                             }`}
                                                     >
                                                         {status}
