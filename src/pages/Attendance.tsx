@@ -25,26 +25,26 @@ const Attendance: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
-            <div className="text-3xl font-bold text-indigo-600 mb-1">{data.summary.overallPercentage}%</div>
-            <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Overall</div>
+          <div className="text-3xl font-bold text-indigo-600 mb-1">{data.summary?.overallPercentage ?? 0}%</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Overall</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
-            <div className="text-3xl font-bold text-emerald-500 mb-1">{data.summary.totalPresent}</div>
-            <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Present Classes</div>
+          <div className="text-3xl font-bold text-emerald-500 mb-1">{data.summary?.totalPresent ?? 0}</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Present Classes</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
-            <div className="text-3xl font-bold text-slate-700 mb-1">{data.summary.totalClasses}</div>
-            <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Classes</div>
+          <div className="text-3xl font-bold text-slate-700 mb-1">{data.summary?.totalClasses ?? 0}</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Classes</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
-            <div className="text-3xl font-bold text-red-500 mb-1">{data.summary.totalClasses - data.summary.totalPresent}</div>
-            <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Absent Classes</div>
+          <div className="text-3xl font-bold text-red-500 mb-1">{(data.summary?.totalClasses ?? 0) - (data.summary?.totalPresent ?? 0)}</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Absent Classes</div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-            <h2 className="font-semibold text-slate-800">Subject-wise Breakdown</h2>
+          <h2 className="font-semibold text-slate-800">Subject-wise Breakdown</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -70,8 +70,8 @@ const Attendance: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-full bg-slate-200 rounded-full h-2.5">
-                        <div 
-                          className={`h-2.5 rounded-full ${sub.percentage >= 75 ? 'bg-emerald-500' : sub.percentage >= 60 ? 'bg-yellow-400' : 'bg-red-500'}`} 
+                        <div
+                          className={`h-2.5 rounded-full ${sub.percentage >= 75 ? 'bg-emerald-500' : sub.percentage >= 60 ? 'bg-yellow-400' : 'bg-red-500'}`}
                           style={{ width: `${sub.percentage}%` }}>
                         </div>
                       </div>
