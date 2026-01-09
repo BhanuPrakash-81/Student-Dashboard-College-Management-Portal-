@@ -101,7 +101,7 @@ exports.getStudentAttendance = async (req, res) => {
 
   } catch (err) {
     console.error('Error fetching attendance:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: err.message });
   }
 };
 
