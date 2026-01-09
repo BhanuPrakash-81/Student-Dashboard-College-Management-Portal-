@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { AttendanceSummary, GradesResponse, EventItem, Announcement } from '../types';
+import { AttendanceSummary, EventItem, Announcement } from '../types';
 import { Link } from 'react-router-dom';
 import Timetable from '../components/Timetable';
 

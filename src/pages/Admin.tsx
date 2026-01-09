@@ -210,7 +210,57 @@ const Admin: React.FC = () => {
               </button>
             </form>
           </div>
-
+          {/* Event Poster */}
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <i className="fas fa-calendar-star text-indigo-500"></i> {editingEventId ? 'Edit Event' : 'Create Event'}
+            </h3>
+            <form onSubmit={handleEventSubmit} className="space-y-5">
+              <input
+                type="text"
+                placeholder="Event Title"
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                value={eventForm.title}
+                onChange={e => setEventForm({ ...eventForm, title: e.target.value })}
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  className="bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  value={eventForm.type}
+                  onChange={e => setEventForm({ ...eventForm, type: e.target.value })}
+                >
+                  <option>Workshop</option>
+                  <option>Seminar</option>
+                  <option>Cultural</option>
+                  <option>Sports</option>
+                  <option>Technical</option>
+                </select>
+                <input
+                  type="date"
+                  className="bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  value={eventForm.date}
+                  onChange={e => setEventForm({ ...eventForm, date: e.target.value })}
+                  required
+                />
+              </div>
+              <textarea
+                placeholder="Event Description..."
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                value={eventForm.description}
+                onChange={e => setEventForm({ ...eventForm, description: e.target.value })}
+                required
+              />
+              <input
+                type="file"
+                onChange={e => setEventImage(e.target.files ? e.target.files[0] : null)}
+                className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <button className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all text-sm uppercase tracking-widest">
+                {editingEventId ? 'Update Event Record' : 'Launch New Event'}
+              </button>
+            </form>
+          </div>
           {/* Quick Access Grid */}
           <div className="grid grid-cols-2 gap-4">
             <button onClick={() => window.location.hash = '#/admin/schedule'} className="bg-slate-900 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-white hover:bg-slate-800 transition-all group">

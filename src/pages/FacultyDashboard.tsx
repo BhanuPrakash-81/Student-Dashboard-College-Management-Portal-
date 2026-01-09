@@ -7,7 +7,6 @@ const FacultyDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const facultyId = localStorage.getItem('id');
     const firstName = localStorage.getItem('first_name');
-    const dept = stats?.profile?.department || 'Department';
 
     useEffect(() => {
         if (facultyId) {
