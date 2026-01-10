@@ -75,6 +75,34 @@ const Login: React.FC = () => {
           </button>
         </form>
 
+        {/* Quick Login Buttons (Developer Tool) */}
+        <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center mb-4">Quick Access Profiles</p>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => { setEmail('admin@klu.edu'); setPassword('12345'); }}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white py-2 px-1 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1"
+            >
+              <i className="fas fa-user-shield text-indigo-400"></i>
+              Admin
+            </button>
+            <button
+              onClick={() => { setEmail('fac900000@klu.edu'); setPassword('12345'); }}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white py-2 px-1 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1"
+            >
+              <i className="fas fa-chalkboard-teacher text-emerald-400"></i>
+              Faculty
+            </button>
+            <button
+              onClick={() => { setEmail('21000001@klu.edu'); setPassword('12345'); }}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white py-2 px-1 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1"
+            >
+              <i className="fas fa-user-graduate text-red-400"></i>
+              Student
+            </button>
+          </div>
+        </div>
+
         <div className="mt-8 text-center text-sm text-slate-400">
           Don't have an account? <Link to="/signup" className="text-red-400 font-bold hover:text-red-300 transition-colors">Create Account</Link>
         </div>
