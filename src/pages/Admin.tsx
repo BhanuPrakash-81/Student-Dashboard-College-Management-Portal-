@@ -264,12 +264,20 @@ const Admin: React.FC = () => {
           {/* Quick Access Grid */}
           <div className="grid grid-cols-2 gap-4">
             <button onClick={() => window.location.hash = '#/admin/schedule'} className="bg-slate-900 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-white hover:bg-slate-800 transition-all group">
-              <i className="fas fa-calendar-alt text-2xl group-hover:scale-110 transition-transform"></i>
-              <span className="text-[10px] font-black uppercase tracking-widest">Schedule Maker</span>
+              <i className="fas fa-calendar-alt text-2xl group-hover:scale-110 transition-transform text-indigo-400"></i>
+              <span className="text-[10px] font-black uppercase tracking-widest text-center">Schedule<br />Builder</span>
             </button>
-            <button className="bg-white border border-slate-100 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-800 hover:border-indigo-500 transition-all group">
-              <i className="fas fa-cog text-2xl text-slate-300 group-hover:rotate-90 group-hover:text-indigo-500 transition-transform duration-500"></i>
-              <span className="text-[10px] font-black uppercase tracking-widest">Global Settings</span>
+            <button onClick={() => window.location.hash = '#/admin/ai-maker'} className="bg-white border border-slate-100 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-800 hover:border-indigo-500 transition-all group">
+              <i className="fas fa-robot text-2xl text-indigo-500 group-hover:scale-110 transition-transform"></i>
+              <span className="text-[10px] font-black uppercase tracking-widest text-center">AI Timetable<br />Maker</span>
+            </button>
+            <button onClick={() => window.location.hash = '#/admin/holidays'} className="bg-white border border-slate-100 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-800 hover:border-red-500 transition-all group">
+              <i className="fas fa-calendar-day text-2xl text-red-500 group-hover:scale-110 transition-transform"></i>
+              <span className="text-[10px] font-black uppercase tracking-widest text-center">Manage<br />Holidays</span>
+            </button>
+            <button className="bg-slate-50 border border-slate-100 aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-400 cursor-not-allowed">
+              <i className="fas fa-database text-2xl"></i>
+              <span className="text-[10px] font-black uppercase tracking-widest">System<br />Logs</span>
             </button>
           </div>
         </div>

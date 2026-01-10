@@ -75,6 +75,7 @@ const AdminSchedule: React.FC = () => {
                             <th className="px-6 py-4">Faculty</th>
                             <th className="px-6 py-4">Class/Sec</th>
                             <th className="px-6 py-4">Room</th>
+                            <th className="px-6 py-4">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -97,6 +98,14 @@ const AdminSchedule: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 text-slate-500">
                                     {s.room_number}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <button
+                                        onClick={async () => { if (window.confirm("Delete slot?")) { await api.schedule.delete(s.id); loadData(); } }}
+                                        className="text-red-400 hover:text-red-600 p-2"
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                         ))}

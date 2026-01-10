@@ -166,6 +166,44 @@ export const api = {
     getStudent: async (studentId: string | number) => {
       const res = await fetch(`${API_BASE}/schedule/student?student_id=${studentId}`);
       return res.json();
+    },
+    delete: async (id: number) => {
+      const res = await fetch(`${API_BASE}/schedule/${id}`, {
+        method: 'DELETE',
+      });
+      return res.json();
+    },
+    generateAI: async (data: any) => {
+      const res = await fetch(`${API_BASE}/schedule/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Generation failed");
+      }
+      return res.json();
+    }
+  },
+  holidays: {
+    getAll: async () => {
+      const res = await fetch(`${API_BASE}/holidays`);
+      return res.json();
+    },
+    add: async (data: any) => {
+      const res = await fetch(`${API_BASE}/holidays/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    delete: async (id: number) => {
+      const res = await fetch(`${API_BASE}/holidays/${id}`, {
+        method: 'DELETE',
+      });
+      return res.json();
     }
   }
 };

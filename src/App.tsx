@@ -16,6 +16,8 @@ import FacultyAttendance from './pages/FacultyAttendance';
 import FacultySchedule from './pages/FacultySchedule';
 import StudentSchedule from './pages/StudentSchedule';
 import AdminSchedule from './pages/AdminSchedule';
+import AdminAIMaker from './pages/AdminAIMaker';
+import AdminHolidays from './pages/AdminHolidays';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 
@@ -110,6 +112,18 @@ const App: React.FC = () => {
           <Route path="/admin/schedule" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminSchedule />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/ai-maker" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminAIMaker />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/holidays" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminHolidays />
             </ProtectedRoute>
           } />
 

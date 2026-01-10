@@ -34,8 +34,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         } else if (userRole === 'admin') {
             return [
                 { path: '/admin', label: 'Admin Panel', icon: 'fas fa-user-shield' },
-                { path: '/admin/schedule', label: 'Schedule Maker', icon: 'fas fa-calendar-plus' },
-                { path: '/announcements', label: 'Manage Notices', icon: 'fas fa-edit' },
+                { path: '/admin/schedule', label: 'Schedule Builder', icon: 'fas fa-calendar-alt' },
+                { path: '/admin/ai-maker', label: 'AI Strategy', icon: 'fas fa-robot' },
+                { path: '/admin/holidays', label: 'Holidays', icon: 'fas fa-calendar-day' },
+                { path: '/announcements', label: 'Notices', icon: 'fas fa-edit' },
             ];
         }
         return [];

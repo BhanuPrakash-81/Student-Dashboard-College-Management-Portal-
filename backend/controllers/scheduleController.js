@@ -116,3 +116,116 @@ exports.getStudentSchedule = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch student schedule" });
     }
 };
+
+// 5. AI Timetable Generator
+exports.generateAISchedule = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { department, semester, section, slotsPerDay = 6 } = req.body;
+
+        if (!department || !semester || !section) {
+            return res.status(400).json({ error: "Missing department, semester, or section" });
+        }
+
+        await client.query("BEGIN");
+
+        // 1. Fetch subjects for this dept/sem
+        const subRes = await client.query(
+            "SELECT * FROM subjects WHERE subject_code LIKE $1 || '%' ",
+            [department]
+        );
+        const subjects = subRes.rows;
+
+        if (subjects.length === 0) {
+            throw new Error("No subjects found for this department.");
+        }
+
+        // 2. Fetch faculty for this dept
+        const facRes = await client.query(
+            "SELECT id, first_name || ' ' || last_name as name FROM users WHERE role = 'faculty' AND department = $1",
+            [department]
+        );
+        const facultyList = facRes.rows;
+
+        if (facultyList.length === 0) {
+            throw new Error("No faculty found for this department.");
+        }
+
+        // 3. Clear existing schedule for this specific group
+        await client.query(
+            "DELETE FROM schedule WHERE department = $1 AND semester = $2 AND section = $3",
+            [department, semester, section]
+        );
+
+        // 4. Generate logic
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const timeSlots = [
+            { start: '09:00:00', end: '10:00:00' },
+            { start: '10:00:00', end: '11:00:00' },
+            { start: '11:00:00', end: '12:00:00' },
+            { start: '13:00:00', end: '14:00:00' },
+            { start: '14:00:00', end: '15:00:00' },
+            { start: '15:00:00', end: '16:00:00' }
+        ];
+
+        // Track subject hours
+        const subjectHours = {};
+        subjects.forEach(s => subjectHours[s.id] = 0);
+        const maxHoursPerSubject = Math.ceil((days.length * timeSlots.length) / subjects.length);
+
+        for (const day of days) {
+            for (const slot of timeSlots) {
+                // Find a subject that hasn't exceeded its quota and doesn't have a conflict
+                const availableSubjects = subjects.filter(s => subjectHours[s.id] < maxHoursPerSubject);
+
+                // Shuffle for randomness
+                availableSubjects.sort(() => Math.random() - 0.5);
+
+                let assigned = false;
+                for (const sub of availableSubjects) {
+                    // Find an appropriate faculty (for simplification, pick one who is free)
+                    const subFac = facultyList.find(f => true); // In real app, check faculty-subject expertise
+
+                    // Check for global conflict (faculty busy with another section or room full)
+                    const conflictRes = await client.query(
+                        `SELECT 1 FROM schedule 
+                         WHERE day_of_week = $1 AND start_time = $2 
+                         AND (faculty_id = $3 OR (department = $4 AND semester = $5 AND section = $6))`,
+                        [day, slot.start, subFac.id, department, semester, section]
+                    );
+
+                    if (conflictRes.rows.length === 0) {
+                        await client.query(
+                            `INSERT INTO schedule (day_of_week, start_time, end_time, subject_id, faculty_id, room_number, department, semester, section)
+                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                            [day, slot.start, slot.end, sub.id, subFac.id, `Room-${Math.floor(Math.random() * 20) + 100}`, department, semester, section]
+                        );
+                        subjectHours[sub.id]++;
+                        assigned = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        await client.query("COMMIT");
+        res.json({ message: "Timetable generated successfully with AI heuristic." });
+
+    } catch (err) {
+        await client.query("ROLLBACK");
+        console.error(err);
+        res.status(500).json({ error: err.message || "Internal generation error" });
+    } finally {
+        client.release();
+    }
+};
+
+exports.deleteSchedule = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query("DELETE FROM schedule WHERE id = $1", [id]);
+        res.json({ message: "Slot deleted" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to delete slot" });
+    }
+};

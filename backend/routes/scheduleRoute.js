@@ -4,12 +4,16 @@ const {
     createSchedule,
     getAllSchedules,
     getFacultySchedule,
-    getStudentSchedule
+    getStudentSchedule,
+    generateAISchedule,
+    deleteSchedule
 } = require("../controllers/scheduleController");
 
 // Admin Routes
 router.post("/create", createSchedule); // Should be protected
+router.post("/generate", generateAISchedule);
 router.get("/all", getAllSchedules);
+router.delete("/:id", deleteSchedule);
 
 // Faculty Routes
 router.get("/faculty/:faculty_id", getFacultySchedule);
