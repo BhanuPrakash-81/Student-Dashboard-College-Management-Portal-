@@ -6,7 +6,12 @@ const AdminAIMaker: React.FC = () => {
     const [genData, setGenData] = useState({
         department: 'CSE',
         semester: 1,
-        section: 'A'
+        section: 'A',
+        startTime: '09:00',
+        duration: 50,
+        slotsCount: 7,
+        breakStart: '12:00',
+        breakDuration: 60
     });
     const [isGenerating, setIsGenerating] = useState(false);
     const [msg, setMsg] = useState({ type: '', text: '' });
@@ -86,16 +91,69 @@ const AdminAIMaker: React.FC = () => {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-indigo-50/50 p-8 rounded-[2rem] border border-indigo-100">
+                        <div className="space-y-4">
+                            <h4 className="font-black text-indigo-900 text-[10px] uppercase tracking-widest flex items-center gap-2">
+                                <i className="fas fa-clock"></i> Timing Strategy
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Start Time</label>
+                                    <input
+                                        type="time"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        value={genData.startTime}
+                                        onChange={e => setGenData({ ...genData, startTime: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Slot Mins</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        value={genData.duration}
+                                        onChange={e => setGenData({ ...genData, duration: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="font-black text-indigo-900 text-[10px] uppercase tracking-widest flex items-center gap-2">
+                                <i className="fas fa-layer-group"></i> Capacity Strategy
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Total Slots</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        value={genData.slotsCount}
+                                        onChange={e => setGenData({ ...genData, slotsCount: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Break (Mins)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        value={genData.breakDuration}
+                                        onChange={e => setGenData({ ...genData, breakDuration: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100">
                         <h4 className="font-black text-slate-800 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <i className="fas fa-cogs text-indigo-500"></i> Generation Constraints
+                            <i className="fas fa-cogs text-indigo-500"></i> Active Constraints
                         </h4>
                         <ul className="space-y-3">
                             {[
                                 "No Faculty overlaps across different sections.",
-                                "Maximum 6 periods per day (9:00 AM - 4:00 PM).",
+                                `Adheres to custom ${genData.duration} min slot duration.`,
                                 "Uniform distribution of subject credits.",
-                                "Respects Departmental room availability."
+                                `Global offset for staggered student flow enabled.`
                             ].map((c, idx) => (
                                 <li key={idx} className="flex items-center gap-3 text-xs text-slate-500 font-medium">
                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>

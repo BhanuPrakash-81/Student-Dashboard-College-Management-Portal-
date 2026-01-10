@@ -121,7 +121,16 @@ exports.getStudentSchedule = async (req, res) => {
 exports.generateAISchedule = async (req, res) => {
     const client = await pool.connect();
     try {
-        const { department, semester, section, slotsPerDay = 6 } = req.body;
+        const {
+            department,
+            semester,
+            section,
+            startTime = '09:00',
+            duration = 60,
+            slotsCount = 6,
+            breakStart = '12:00',
+            breakDuration = 60
+        } = req.body;
 
         if (!department || !semester || !section) {
             return res.status(400).json({ error: "Missing department, semester, or section" });
@@ -157,16 +166,25 @@ exports.generateAISchedule = async (req, res) => {
             [department, semester, section]
         );
 
-        // 4. Generate logic
+        // 4. Generate dynamic time slots
+        const timeSlots = [];
+        let current = new Date(`2026-01-01T${startTime}:00`);
+        const breakTime = new Date(`2026-01-01T${breakStart}:00`);
+
+        for (let i = 0; i < slotsCount; i++) {
+            // Check if we hit break time
+            if (current >= breakTime && timeSlots.length > 0 && timeSlots[timeSlots.length - 1].end <= breakStart) {
+                current = new Date(current.getTime() + breakDuration * 60000);
+            }
+
+            const startStr = current.toTimeString().slice(0, 8);
+            current = new Date(current.getTime() + duration * 60000);
+            const endStr = current.toTimeString().slice(0, 8);
+
+            timeSlots.push({ start: startStr, end: endStr });
+        }
+
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        const timeSlots = [
-            { start: '09:00:00', end: '10:00:00' },
-            { start: '10:00:00', end: '11:00:00' },
-            { start: '11:00:00', end: '12:00:00' },
-            { start: '13:00:00', end: '14:00:00' },
-            { start: '14:00:00', end: '15:00:00' },
-            { start: '15:00:00', end: '16:00:00' }
-        ];
 
         // Track subject hours
         const subjectHours = {};
