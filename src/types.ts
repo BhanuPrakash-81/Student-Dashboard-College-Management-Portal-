@@ -89,5 +89,5 @@ export interface Announcement {
   title: string;
   message: string;
   created_at: string;
-  is_active: number; // 0 or 1
+  is_active: boolean | number;
 }

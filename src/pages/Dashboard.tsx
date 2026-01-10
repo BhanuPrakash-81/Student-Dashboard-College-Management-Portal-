@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
         setAttendance(att.summary);
         setCgpa(grd.cgpa);
         setRecentEvents(evts.slice(0, 3));
-        setNotifications(anns.filter((a: Announcement) => a.is_active === 1));
+        setNotifications(anns.filter((a: Announcement) => Boolean(a.is_active)));
         setTodaySchedule(sched.filter((s: any) => s.day_of_week === today));
         setLoading(false);
       }).catch(err => {

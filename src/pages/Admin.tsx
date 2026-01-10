@@ -166,7 +166,7 @@ const Admin: React.FC = () => {
               <div className="space-y-4">
                 {announcements.slice(0, 4).map(a => (
                   <div key={a.id} className="flex items-start gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-50">
-                    <div className="mt-1"><span className={`w-2 h-2 rounded-full block ${a.is_active === 1 ? 'bg-emerald-500' : 'bg-slate-300'}`}></span></div>
+                    <div className="mt-1"><span className={`w-2 h-2 rounded-full block ${Boolean(a.is_active) ? 'bg-emerald-500' : 'bg-slate-300'}`}></span></div>
                     <div>
                       <div className="text-xs font-bold text-slate-800 line-clamp-1">{a.title}</div>
                       <div className="text-[10px] text-slate-400 leading-tight mt-0.5 line-clamp-2">{a.message}</div>

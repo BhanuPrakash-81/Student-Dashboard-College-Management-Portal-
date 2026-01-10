@@ -65,7 +65,7 @@ const Announcements: React.FC = () => {
                 <div className="flex-grow">
                   <div className="flex justify-between items-start mb-2">
                     <h2 className="text-xl font-bold text-slate-800 group-hover:text-red-700 transition-colors">{item.title}</h2>
-                    {item.is_active === 1 && <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase tracking-wider">New</span>}
+                    {Boolean(item.is_active) && <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase tracking-wider">New</span>}
                   </div>
                   <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{item.message}</p>
                 </div>
