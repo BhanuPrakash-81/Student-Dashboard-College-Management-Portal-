@@ -125,6 +125,10 @@ const Admin: React.FC = () => {
                     </div>
                     <div>
                       <div className="font-bold text-slate-800">{s.full_name}</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded">{s.branch || 'General'}</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.gender}</span>
+                      </div>
                       <div className="text-xs text-slate-500 font-medium">{s.email}</div>
                     </div>
                   </div>

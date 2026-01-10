@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 
 exports.signup = async (req, res) => {
   try {
-    const { first_name, middle_name, last_name, email, password } = req.body;
+    const { first_name, middle_name, last_name, email, password, branch, gender } = req.body;
     console.log("Signup Request:", { email, hasFile: !!req.file });
     const profileImage = req.file ? req.file.buffer : null;
 
@@ -23,12 +23,12 @@ exports.signup = async (req, res) => {
     }
 
     const query = `
-      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image)
-      VALUES ($1, $2, $3, $4, $5, 'student', false, $6)
+      INSERT INTO users (first_name, middle_name, last_name, email, password, role, approved, profile_image, branch, gender, department)
+      VALUES ($1, $2, $3, $4, $5, 'student', false, $6, $7, $8, $9)
     `;
     const safeImage = req.file ? req.file.buffer : null;
 
-    await pool.query(query, [first_name, middle_name, last_name, email, hashed, safeImage]);
+    await pool.query(query, [first_name, middle_name, last_name, email, hashed, safeImage, branch, gender, branch]);
 
     res.json({ message: "Signup successful" });
   } catch (err) {
@@ -67,13 +67,15 @@ exports.login = async (req, res) => {
 exports.pendingStudents = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, first_name, middle_name, last_name, email, profile_image 
+      `SELECT id, first_name, middle_name, last_name, email, profile_image, branch, gender 
        FROM users WHERE role='student' AND approved=false`
     );
     const formatted = rows.map(s => ({
       id: s.id,
       full_name: `${s.first_name} ${s.middle_name || ""} ${s.last_name}`.trim(),
       email: s.email,
+      branch: s.branch,
+      gender: s.gender,
       profile_image: s.profile_image ? Buffer.from(s.profile_image).toString("base64") : null
     }));
     res.json(formatted);

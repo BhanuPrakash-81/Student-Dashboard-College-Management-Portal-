@@ -78,9 +78,9 @@ async function seed() {
             const sec = (i % 2 === 0) ? 'A' : 'B';
             const gender = (i % 2 === 0) ? 'F' : 'M';
             await client.query(`
-                INSERT INTO users (id, first_name, last_name, email, password, role, approved, department, semester, section, profile_image)
-                VALUES ($1, $2, $3, $4, $5, 'student', TRUE, $6, $7, $8, $9)
-            `, [id, `Student_${i}`, 'KL', `${id}@klu.edu`, HASH, dept, sem, sec, gender === 'F' ? bufF : bufM]);
+                INSERT INTO users (id, first_name, last_name, email, password, role, approved, department, branch, semester, section, profile_image, gender)
+                VALUES ($1, $2, $3, $4, $5, 'student', TRUE, $6, $7, $8, $9, $10, $11)
+            `, [id, `Student_${i}`, 'KL', `${id}@klu.edu`, HASH, dept, dept, sem, sec, gender === 'F' ? bufF : bufM, gender === 'F' ? 'Female' : 'Male']);
             students.push({ id, dept, sem, sec });
         }
 

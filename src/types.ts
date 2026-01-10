@@ -81,6 +81,8 @@ export interface PendingStudent {
   id: number;
   full_name: string;
   email: string;
+  branch: string;
+  gender: string;
   profile_image: string | null;
 }
 
