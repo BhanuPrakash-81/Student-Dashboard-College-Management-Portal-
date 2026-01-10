@@ -169,12 +169,25 @@ exports.generateAISchedule = async (req, res) => {
         // 4. Generate dynamic time slots
         const timeSlots = [];
         let current = new Date(`2026-01-01T${startTime}:00`);
-        const breakTime = new Date(`2026-01-01T${breakStart}:00`);
+        const lunchTime = new Date(`2026-01-01T${breakStart}:00`);
+        const intervalTime = req.body.intervalStart ? new Date(`2026-01-01T${req.body.intervalStart}:00`) : null;
+        const intervalDuration = req.body.intervalDuration || 0;
 
         for (let i = 0; i < slotsCount; i++) {
-            // Check if we hit break time
-            if (current >= breakTime && timeSlots.length > 0 && timeSlots[timeSlots.length - 1].end <= breakStart) {
-                current = new Date(current.getTime() + breakDuration * 60000);
+            // Check for Interval Break
+            if (intervalTime && current >= intervalTime) {
+                const lastSlot = timeSlots[timeSlots.length - 1];
+                if (!lastSlot || new Date(`2026-01-01T${lastSlot.end}`) <= intervalTime) {
+                    current = new Date(current.getTime() + intervalDuration * 60000);
+                }
+            }
+
+            // Check for Lunch Break
+            if (current >= lunchTime) {
+                const lastSlot = timeSlots[timeSlots.length - 1];
+                if (!lastSlot || new Date(`2026-01-01T${lastSlot.end}`) <= lunchTime) {
+                    current = new Date(current.getTime() + breakDuration * 60000);
+                }
             }
 
             const startStr = current.toTimeString().slice(0, 8);

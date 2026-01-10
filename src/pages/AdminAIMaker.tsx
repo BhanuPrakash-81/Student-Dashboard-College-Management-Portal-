@@ -10,7 +10,9 @@ const AdminAIMaker: React.FC = () => {
         startTime: '09:00',
         duration: 50,
         slotsCount: 7,
-        breakStart: '12:00',
+        intervalStart: '10:40',
+        intervalDuration: 15,
+        breakStart: '12:45',
         breakDuration: 60
     });
     const [isGenerating, setIsGenerating] = useState(false);
@@ -24,7 +26,7 @@ const AdminAIMaker: React.FC = () => {
         setMsg({ type: '', text: '' });
         try {
             await api.schedule.generateAI(genData);
-            setMsg({ type: 'success', text: "Timetable generated successfully using AI heuristics!" });
+            setMsg({ type: 'success', text: "Timetable generated successfully with multi-break strategy!" });
         } catch (err: any) {
             setMsg({ type: 'error', text: err.message || "Auto-generation failed." });
         } finally {
@@ -33,16 +35,16 @@ const AdminAIMaker: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="max-w-5xl mx-auto px-4 py-12">
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
                 <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-10 text-white relative">
                     <div className="absolute top-0 right-0 p-10 opacity-10 text-8xl">
                         <i className="fas fa-robot"></i>
                     </div>
                     <div className="relative z-10">
-                        <h1 className="text-4xl font-black tracking-tight mb-2 uppercase">AI Timetable Strategist</h1>
+                        <h1 className="text-4xl font-black tracking-tight mb-2 uppercase italic">AI Timetable Strategist</h1>
                         <p className="text-indigo-100 font-medium opacity-90 max-w-lg leading-relaxed">
-                            Automatically generate optimized class schedules by balancing faculty availability, subject credits, and room allocations.
+                            Ultra-flexible scheduling engine with multi-break support and staggered entry protocols.
                         </p>
                     </div>
                 </div>
@@ -91,17 +93,18 @@ const AdminAIMaker: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-indigo-50/50 p-8 rounded-[2rem] border border-indigo-100">
-                        <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Timing Panel */}
+                        <div className="bg-indigo-50/30 p-8 rounded-[2rem] border border-indigo-100 space-y-6">
                             <h4 className="font-black text-indigo-900 text-[10px] uppercase tracking-widest flex items-center gap-2">
-                                <i className="fas fa-clock"></i> Timing Strategy
+                                <i className="fas fa-clock"></i> Session Configuration
                             </h4>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Start Time</label>
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Class Start</label>
                                     <input
                                         type="time"
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                                         value={genData.startTime}
                                         onChange={e => setGenData({ ...genData, startTime: e.target.value })}
                                     />
@@ -110,32 +113,62 @@ const AdminAIMaker: React.FC = () => {
                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Slot Mins</label>
                                     <input
                                         type="number"
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
                                         value={genData.duration}
                                         onChange={e => setGenData({ ...genData, duration: Number(e.target.value) })}
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Daily Periods Count</label>
+                                <input
+                                    type="range" min="1" max="10"
+                                    className="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    value={genData.slotsCount}
+                                    onChange={e => setGenData({ ...genData, slotsCount: Number(e.target.value) })}
+                                />
+                                <div className="text-right text-[10px] font-black text-indigo-600 mt-1">{genData.slotsCount} Periods</div>
+                            </div>
                         </div>
-                        <div className="space-y-4">
-                            <h4 className="font-black text-indigo-900 text-[10px] uppercase tracking-widest flex items-center gap-2">
-                                <i className="fas fa-layer-group"></i> Capacity Strategy
+
+                        {/* Breaks Panel */}
+                        <div className="bg-orange-50/30 p-8 rounded-[2rem] border border-orange-100 space-y-6">
+                            <h4 className="font-black text-orange-900 text-[10px] uppercase tracking-widest flex items-center gap-2">
+                                <i className="fas fa-mug-hot"></i> Flexible Break Policy
                             </h4>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Total Slots</label>
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Interval Start</label>
                                     <input
-                                        type="number"
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
-                                        value={genData.slotsCount}
-                                        onChange={e => setGenData({ ...genData, slotsCount: Number(e.target.value) })}
+                                        type="time"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+                                        value={genData.intervalStart}
+                                        onChange={e => setGenData({ ...genData, intervalStart: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Break (Mins)</label>
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Interval Mins</label>
                                     <input
                                         type="number"
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+                                        value={genData.intervalDuration}
+                                        onChange={e => setGenData({ ...genData, intervalDuration: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Lunch Start</label>
+                                    <input
+                                        type="time"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+                                        value={genData.breakStart}
+                                        onChange={e => setGenData({ ...genData, breakStart: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Lunch Mins</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
                                         value={genData.breakDuration}
                                         onChange={e => setGenData({ ...genData, breakDuration: Number(e.target.value) })}
                                     />
@@ -144,39 +177,40 @@ const AdminAIMaker: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100">
-                        <h4 className="font-black text-slate-800 text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <i className="fas fa-cogs text-indigo-500"></i> Active Constraints
+                    <div className="bg-slate-900 rounded-[2rem] p-8 text-white relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-indigo-500/40 transition-all duration-500"></div>
+                        <h4 className="font-black text-xs uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                            <i className="fas fa-shield-check text-emerald-400"></i> Smart Constraint Validation
                         </h4>
-                        <ul className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                             {[
-                                "No Faculty overlaps across different sections.",
-                                `Adheres to custom ${genData.duration} min slot duration.`,
-                                "Uniform distribution of subject credits.",
-                                `Global offset for staggered student flow enabled.`
+                                "Cross-Section Faculty Scheduling",
+                                "Staggered Multi-Break sequence",
+                                "Departmental Room Load Balancing",
+                                "Automatic Break Transition"
                             ].map((c, idx) => (
-                                <li key={idx} className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                                <div key={idx} className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                                    <i className="fas fa-check text-emerald-500 text-[8px]"></i>
                                     {c}
-                                </li>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     </div>
 
                     <button
                         onClick={handleGenerate}
                         disabled={isGenerating}
-                        className={`w-full py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl transition-all flex items-center justify-center gap-3 ${isGenerating ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-red-600 hover:-translate-y-1'}`}
+                        className={`w-full py-8 rounded-[2rem] font-black uppercase tracking-[0.3em] text-sm shadow-2xl transition-all flex items-center justify-center gap-4 ${isGenerating ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-950 text-white hover:bg-indigo-600 hover:-translate-y-2 active:scale-95'}`}
                     >
                         {isGenerating ? (
-                            <><i className="fas fa-sync fa-spin"></i> Analyzing Conflicts...</>
+                            <><i className="fas fa-circle-notch fa-spin"></i> Synthesizing Schedule...</>
                         ) : (
-                            <><i className="fas fa-magic"></i> Generate Optimized Schedule</>
+                            <><i className="fas fa-bolt-lightning"></i> AI Deployment</>
                         )}
                     </button>
 
-                    <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        *This action will overwrite existing schedules for the selected group.
+                    <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-60">
+                        Multi-parameter generation engine v2.0 • Respects all academic holidays
                     </p>
                 </div>
             </div>
